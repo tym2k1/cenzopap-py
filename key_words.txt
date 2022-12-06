@@ -8,6 +8,7 @@ pierdal
 pierdol
 dup
 eti
+eia
 jp2gmd
 korwa
 kurestwo
