@@ -1,0 +1,50 @@
+BEST Coding Marathon 2023
+Artificial Intelligence - Test eliminacyjny
+1. Problem
+W dobie internetu coraz częściej spotykamy się z filtrowaniem komentarzy czy czatu pod
+kątem treści obraźliwych. W przypadku wielu stron wynika to z konieczności utrzymania
+odpowiedniego poziomu kultury, ze względu na wymagania reklamodawców, którzy nie
+chcą, by ich marka była kojarzona z “nieodpowiednimi środowiskami”. Mimo to, używane
+obecnie filtry wciąż nie działają perfekcyjnie - ich twórcy, chcąc ograniczyć ilość przypadków
+“false positive”, często poprzestają na ograniczonych rozwiązaniach. Ponadto, sprawy nie
+ułatwiają użytkownicy internetu, którzy chcąc obejść cenzurę, korzystają ze sztuczek takich
+jak zastępowanie w słowach niektórych liter podobnie wyglądającymi znakami, czy pisaniem
+w nie do końca poprawnie gramatyczny sposób. W wyniku tego problem usuwania treści
+obraźliwych, początkowo trywialny, staje się znacznie trudniejszy (przykładowo,
+wprowadzony jakiś czas temu filtr czatu w jednej z popularnych gier, nie pozwalał na użycie
+słowa night z powodu rzekomego podobieństwa do pewnego bardzo nieładnego słowa).
+2. Zadanie
+Celem zadania jest implementacja filtra zamieniającego litery polskich słów
+niecenzuralnych na gwiazdki (*). Jako uproszczenie, ograniczamy się wyłącznie do
+wulgaryzmów (należy uwzględniać słowa wybrane wedle uznania, minimalnie 10
+różnych).
+- Wulgaryzmy uznajemy za różne, jeśli nie są względem siebie wyrazami pokrewnymi
+- Podczas tworzenia listy niecenzuralnych słów można wspomóc się tą stroną.
+By ulepszyć działanie filtra można uwzględnić sytuacje takie jak:
+● zamiana znaków (i,e,a,o,u) na kolejno: (1,3,4,0,v)
+● zamianę małego L na duże i (“l” -> “I”), a litery “w” na “vv”
+● powtarzanie niektórych liter w danym wyrazie, np. “ssłoowo”
+● słowa mogą występować z różnymi końcówkami fleksyjnymi
+● próby obejścia filtra poprzez dostawienie do wyrazu losowego znaku (na przykład
+spacji), lub zamiana kolejności dwóch liter (dla większej ilości zamian, można
+przyjąć, że słowo staje się nieczytelne).3. Kryteria oceny
+● Jakość kodu
+● Pomysłowość rozwiązania
+● Liczba uwzględnianych sytuacji (nie chodzi o liczbę uwzględnianych
+przekleństw, a sposoby obejścia cenzury danego słowa, jakich mógłby
+próbować hipotetyczny użytkownik czatu - przykłady podano wyżej)
+● Sposób rozwiązania jest całkowicie dowolny, jednak niżej punktowane będzie
+korzystanie w rozwiązaniu z istniejących już filtrów
+● Zaletą będzie plik, np. README.md, z opisem jak uruchomić wasze
+rozwiązanie, jak działa, itp.
+4. Wysyłanie rozwiązań
+Zadanie rozwiązujecie drużynowo - jedna drużyna wysyła jedno rozwiązanie.
+Rozwiązanie można wysłać na dwa sposoby:
+● link do publicznego repozytorium na GitHubie (pamiętajcie, aby repozytorium
+było publiczne, bo inaczej nie będziemy w stanie zobaczyć jego zawartości)
+● link do folderu na Google Drive z waszym rozwiązaniem
+Mile widziane pliki tekstowe, np README.md, z opisem jak uruchomić wasze
+rozwiązanie, jak działa, itp. Rozwiązanie zadania należy wysłać na adres mailowy
+ct_hackathon@best.gdansk.pl do dnia 9.12.2022 godz. 22:00. Temat wiadomości
+powinien mieć format: “[Artificial intelligence] BEST Coding Marathon 2023 Zadanie
+wstępne - Drużyna {NazwaDrużyny}”.
