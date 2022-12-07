@@ -89,8 +89,8 @@ print(inputtolist("dupa maryna cyce wadowice"))
 root = tkinter.Tk()
 root.title = "Wielka Polska Cenzura"
 root.configure(bg ="#242424")
-l = tkinter.Label(root, text='Cenzura')
-l.pack()
+l = tkinter.Label(root, text='Cenzura', font=("BROADWAY", 40), bg="#242424", fg="#1CF020")
+l.place(x=250, y=20, width=300, height=80)
 
 
 def funPrzycisk():
@@ -110,8 +110,8 @@ def funPrzycisk():
 
 
 
-b = tkinter.Button(root, text='tak', width=10, bg='red', fg='white', command = funPrzycisk)
-b.pack(side=tkinter.RIGHT)
+b = tkinter.Button(root, text='Ocenzuruj', width=10, bg='#4D4D4D', fg='white', font=20, command = funPrzycisk)
+b.place(x=350, y=500, width=100, height=40)
 
 #wpis = tkinter.Entry(root, width=50)                        #tu wpisujemy rzeczy
 #wpis.place(x=450, y=200, width=200, height=300)
@@ -121,10 +121,10 @@ b.pack(side=tkinter.RIGHT)
 
 #Textbox
 txbox = tkinter.Text(root, bg="#4D4D4D")          #IN
-txbox.place(x=150, y=200, width=200, height=300)
+txbox.place(x=150, y=150, width=200, height=300)
 
 toutBox = tkinter.Text(root, bg="#4D4D4D")
-toutBox.place(x=450, y=200, width=200, height=300)
+toutBox.place(x=450, y=150, width=200, height=300)
 
 # wpis.insert(0, "Wpisz tekst do ocenzurowania")            #co sie na poczatku wyswietla w Input Panelu
 
