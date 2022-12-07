@@ -6,9 +6,10 @@ import numpy as np
 
 with open(os.path.join(os.path.dirname(__file__), 'word_blacklist1.txt')) as file:
    blacklist = set(file.read().split('\n'))                                                 #   wrzucone do seta bo najlepsze data type fo tego chyba + relative path!!!
+   #blacklistset = set(line.strip() for line in file)                                          #   For large blacklist this option would provide faster bootup
    blacklist.discard('')
    blacklist.discard(' ')
-   #blacklist = set(line.strip() for line in file)                                          #   For large blacklist this option would provide faster bootup
+
 
 replacement_dict = {
     'ą': 'a',
@@ -74,11 +75,11 @@ def lower(string):
 
 
 
-def cenzo(string, int):                                                                      #  cenzurowanie slowek      (wrzucilem tutaj logike bo nie mam pojecia jak dac IF do zwektoryzowanej funkcji bez iterowania)
+def cenzo(string, int):                                                                      #  cenzurowanie slowek
     if int >= threshold:
-        return string[0] + '*' * (len(string)-2) + string[-1] #and True
+        return string[0] + '*' * (len(string)-2) + string[-1]
     else:
-        return string #and False
+        return string
 
 def partial_match(x,y):
     return(fuzz.ratio(x,y))
@@ -97,23 +98,27 @@ threshold = 75                                                                  
 
 
 
-
-dataframecolumn_match = pd.DataFrame(inputtolist(removedup(translatetable(lower(input)))))
 dataframecolumn_original = pd.DataFrame(inputtolist(input))
+dataframecolumn_match = pd.DataFrame(inputtolist(removedup(translatetable(lower(input)))))
 dataframecolumn_original.columns = ['Original']
 dataframecolumn_match.columns = ['Match']
 
 dataframecolumn_compare = pd.DataFrame(blacklist)
-dataframecolumn_compare.columns = ['Compare']                                           #   nie pytajcie do konca jak to wszystko dziala ale dziala SZYBKO czyli zajebiscie ale sie jebalem z tym fchuj
+dataframecolumn_compare.columns = ['Compare']                                           #   zajebiste jestem dumny z tego, mozna ew dorobic aby osie sie podpisywaly ktory score z czego powstaje no i ofc dalsza logika
+dataframecolumn_compare = dataframecolumn_compare.transpose()
 
-dataframecolumn_original['Match'] = dataframecolumn_match
-dataframecolumn_original['Key'] = 1
-dataframecolumn_compare['Key'] = 1
+#dataframecolumn_original['Match'] = dataframecolumn_match
 
-combined_dataframe = dataframecolumn_original.merge(dataframecolumn_compare,on="Key",how="left")
+print(dataframecolumn_match)
+print(dataframecolumn_compare)
 
-combined_dataframe['Score']=partial_match_vector(combined_dataframe['Match'],combined_dataframe['Compare'])
+score_dataframe = pd.DataFrame(partial_match_vector(dataframecolumn_match, dataframecolumn_compare), columns = dataframecolumn_compare.columns ,index = dataframecolumn_match.index)
+#score_dataframe = pd.DataFrame.rename(mapper = )
+score_dataframe['Max_Score'] = score_dataframe.max(axis=1)
+print(score_dataframe)
 
-combined_dataframe['Cenzored']=partial_cenzo_vector(combined_dataframe['Original'], combined_dataframe['Score'])
+#print(partial_match_vector(dataframecolumn_match['Match'],dataframecolumn_compare['Compare']))
+#combined_dataframe['Score']=partial_match_vector(combined_dataframe['Match'],combined_dataframe['Compare'])
+#print(combined_dataframe)
+#combined_dataframe['Cenzored']=partial_cenzo_vector(combined_dataframe['Original'], combined_dataframe['Score'])
 
-print(combined_dataframe)
