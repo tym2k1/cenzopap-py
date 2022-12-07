@@ -90,7 +90,7 @@ partial_cenzo_vector = np.vectorize(cenzo)
 
 
 
-input = "Chuj chuj chuj chój chuja chuuuuuuuja chujek chuju chujem huj huja hujek huju hujem"
+input = "Chuj kaczka. chuj, chuj chój   chuja    chuuuuuuuja chujek chuju chujem huj huja hujek huju hujem"
 output = []
 #inputlistvar = inputtolist(input)
 threshold = 75                                                                          #   w jakim procencie musza sie pokrywac by byc ocenzurowane (0-100)
@@ -99,26 +99,21 @@ threshold = 75                                                                  
 
 
 dataframecolumn_original = pd.DataFrame(inputtolist(input))
-dataframecolumn_match = pd.DataFrame(inputtolist(removedup(translatetable(lower(input)))))
 dataframecolumn_original.columns = ['Original']
+dataframecolumn_match = pd.DataFrame(inputtolist(removedup(translatetable(lower(input)))), index = dataframecolumn_original['Original'])
 dataframecolumn_match.columns = ['Match']
 
 dataframecolumn_compare = pd.DataFrame(blacklist)
-dataframecolumn_compare.columns = ['Compare']                                           #   zajebiste jestem dumny z tego, mozna ew dorobic aby osie sie podpisywaly ktory score z czego powstaje no i ofc dalsza logika
-dataframecolumn_compare = dataframecolumn_compare.transpose()
-
-#dataframecolumn_original['Match'] = dataframecolumn_match
+dataframecolumn_compare.columns = ['Compare']                                           #   that was hard ngl
+dataframecolumn_compare_trans = dataframecolumn_compare.transpose()
 
 print(dataframecolumn_match)
-print(dataframecolumn_compare)
+print(dataframecolumn_compare_trans)
 
-score_dataframe = pd.DataFrame(partial_match_vector(dataframecolumn_match, dataframecolumn_compare), columns = dataframecolumn_compare.columns ,index = dataframecolumn_match.index)
-#score_dataframe = pd.DataFrame.rename(mapper = )
+score_dataframe = pd.DataFrame(partial_match_vector(dataframecolumn_match, dataframecolumn_compare_trans), columns = dataframecolumn_compare['Compare'] ,index = dataframecolumn_original['Original'])
+
+score_dataframe['Match'] = dataframecolumn_match
 score_dataframe['Max_Score'] = score_dataframe.max(axis=1)
+score_dataframe['Cenzored']=partial_cenzo_vector(score_dataframe.index, score_dataframe['Max_Score'])
+
 print(score_dataframe)
-
-#print(partial_match_vector(dataframecolumn_match['Match'],dataframecolumn_compare['Compare']))
-#combined_dataframe['Score']=partial_match_vector(combined_dataframe['Match'],combined_dataframe['Compare'])
-#print(combined_dataframe)
-#combined_dataframe['Cenzored']=partial_cenzo_vector(combined_dataframe['Original'], combined_dataframe['Score'])
-
