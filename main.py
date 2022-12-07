@@ -61,13 +61,16 @@ replacement_dict = {
 
 
 def translatetable(string):
+   """replaces characters imitating letters to letters"""
     regex = re.compile('|'.join(map(re.escape, replacement_dict)))                      #   https://stackoverflow.com/questions/63230213/translate-table-value-error-valueerror-string-keys-in-translate-table-must-be-o
     return regex.sub(lambda match: replacement_dict[match.group(0)], string)            #   :)
 
 def removedup(string):                                                                  #   usuwanie tych samych literek kolo sb (chuuuuj = chuj)
+    """removes duplicate letters"""
     return re.sub(r"(.)\1+", r"\1", string)                                             #   mozna zamienic na lambde
 
 def inputtolist(string):
+    """find all words separated by characters [a-zA-Z0-9_]+"""
     return re.findall(r'\w+', string)                                                   #  mozna tez zamienic na lambde
 
 def lower(string):
@@ -76,12 +79,14 @@ def lower(string):
 
 
 def cenzo(string, int):                                                                      #  cenzurowanie slowek
+    """replaces inner letters in a word with stars if its similarity with blacklist word is greater than treshold"""
     if int >= threshold:
         return string[0] + '*' * (len(string)-2) + string[-1]
     else:
         return string
 
 def partial_match(x,y):
+   """returns the ratio of similarity between 2 words"""
     return(fuzz.ratio(x,y))
 
 partial_match_vector = np.vectorize(partial_match)                                      #   https://stackoverflow.com/questions/56040817/python-fuzzy-matching-strings-in-list-performance
