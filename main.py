@@ -1,15 +1,11 @@
 import os
 import re
-from fuzzywuzzy import fuzz
-import pandas as pd
-import numpy as np
+import tkinter
 
-with open(os.path.join(os.path.dirname(__file__), 'word_blacklist1.txt')) as file:
-   blacklist = set(file.read().split('\n'))                                                 #   wrzucone do seta bo najlepsze data type fo tego chyba + relative path!!!
-   #blacklistset = set(line.strip() for line in file)                                          #   For large blacklist this option would provide faster bootup
-   blacklist.discard('')
-   blacklist.discard(' ')
 
+with open(os.path.join(os.path.dirname(__file__), 'word_blacklist.txt')) as file:       #word_blacklist.txt  key_words.txt
+   blacklist = set(file.read().split())                                                 #   wrzucone do seta bo najlepsze data type fo tego chyba + relative path!!!
+   #blacklist = set(line.strip() for line in file)                                      #   For large sets of words this option would be faster
 
 replacement_dict = {
     'ą': 'a',
@@ -58,67 +54,92 @@ replacement_dict = {
     '[-': 'e',      # dokoncze potem
 }
 
-
-
 def translatetable(string):
     regex = re.compile('|'.join(map(re.escape, replacement_dict)))                      #   https://stackoverflow.com/questions/63230213/translate-table-value-error-valueerror-string-keys-in-translate-table-must-be-o
     return regex.sub(lambda match: replacement_dict[match.group(0)], string)            #   :)
 
-def removedup(string):                                                                  #   usuwanie tych samych literek kolo sb (chuuuuj = chuj)
-    return re.sub(r"(.)\1+", r"\1", string)                                             #   mozna zamienic na lambde
+#def translatetable(string):
+    #string = string.translate(str.maketrans(replacement_dict))                         #   Works only for dict keys with a size of 1
+    #return string
+
+def removedup(string):
+    string = re.sub(r"(.)\1+", r"\1", string)                                           #   usuwanie tych samych literek kolo sb (chuuuuj = chuj)
+    return string                                                                       #   mozna zamienic na lambde
 
 def inputtolist(string):
-    return re.findall(r'\w+', string)                                                   #  mozna tez zamienic na lambde
+    wordlist = re.findall(r'\w+', string)
+    return wordlist                                                                      #  mozna tez zamienic na lambde
 
-def lower(string):
-    return string.lower()
-
-
-
-def cenzo(string, int):                                                                      #  cenzurowanie slowek
-    if int >= threshold:
-        return string[0] + '*' * (len(string)-2) + string[-1]
+def cenzo(string):                                                                       #  main func poki co
+    #string = match.group()
+    if removedup(translatetable(string.lower())) in blacklist:
+        #return '*' * len(string)                                                         #  2 wersje zwracanie full cenzo (chuj = ****) albo niepelne (chuj = c**j)
+        return string[0] + '*' * (len(string)-2) + string[-1] 
     else:
         return string
 
-def partial_match(x,y):
-    return(fuzz.ratio(x,y))
-
-partial_match_vector = np.vectorize(partial_match)                                      #   https://stackoverflow.com/questions/56040817/python-fuzzy-matching-strings-in-list-performance
-partial_cenzo_vector = np.vectorize(cenzo)
+print(translatetable('\/4p3'))
+print(translatetable('CH000000000i'))
+print(inputtolist("dupa maryna cyce wadowice"))
 
 
 
+#GUI
 
-input = "Chuj chuj chuj chój chuja chuuuuuuuja chujek chuju chujem huj huja hujek huju hujem"
-output = []
-#inputlistvar = inputtolist(input)
-threshold = 75                                                                          #   w jakim procencie musza sie pokrywac by byc ocenzurowane (0-100)
+root = tkinter.Tk()
+root.title = "Wielka Polska Cenzura"
+root.configure(bg ="#242424")
+l = tkinter.Label(root, text='Cenzura')
+l.pack()
+
+
+def funPrzycisk():
+    #wpis.delete(0, END)
+
+
+#ENTRY BOX
+    #print(txbox.get("1.0", tkinter.END))
+    global wpisIn
+   # wpisIn = wpis.get()
+    in1 = txbox.get("1.0", tkinter.END)
+    out1 = []
+    for i in inputtolist(in1):
+        out1.append(cenzo(i))
+    toutBox.delete("1.0", tkinter.END)
+    toutBox.insert(tkinter.INSERT, out1)
 
 
 
+b = tkinter.Button(root, text='tak', width=10, bg='red', fg='white', command = funPrzycisk)
+b.pack(side=tkinter.RIGHT)
 
-dataframecolumn_original = pd.DataFrame(inputtolist(input))
-dataframecolumn_match = pd.DataFrame(inputtolist(removedup(translatetable(lower(input)))))
-dataframecolumn_original.columns = ['Original']
-dataframecolumn_match.columns = ['Match']
+#wpis = tkinter.Entry(root, width=50)                        #tu wpisujemy rzeczy
+#wpis.place(x=450, y=200, width=200, height=300)
 
-dataframecolumn_compare = pd.DataFrame(blacklist)
-dataframecolumn_compare.columns = ['Compare']                                           #   zajebiste jestem dumny z tego, mozna ew dorobic aby osie sie podpisywaly ktory score z czego powstaje no i ofc dalsza logika
-dataframecolumn_compare = dataframecolumn_compare.transpose()
+#otput = tkinter.Entry(root, width=50)                       #wynik jest wypisywany
+#otput.pack()
 
-#dataframecolumn_original['Match'] = dataframecolumn_match
+#Textbox
+txbox = tkinter.Text(root, bg="#4D4D4D")          #IN
+txbox.place(x=150, y=200, width=200, height=300)
 
-print(dataframecolumn_match)
-print(dataframecolumn_compare)
+toutBox = tkinter.Text(root, bg="#4D4D4D")
+toutBox.place(x=450, y=200, width=200, height=300)
 
-score_dataframe = pd.DataFrame(partial_match_vector(dataframecolumn_match, dataframecolumn_compare), columns = dataframecolumn_compare.columns ,index = dataframecolumn_match.index)
-#score_dataframe = pd.DataFrame.rename(mapper = )
-score_dataframe['Max_Score'] = score_dataframe.max(axis=1)
-print(score_dataframe)
+# wpis.insert(0, "Wpisz tekst do ocenzurowania")            #co sie na poczatku wyswietla w Input Panelu
 
-#print(partial_match_vector(dataframecolumn_match['Match'],dataframecolumn_compare['Compare']))
-#combined_dataframe['Score']=partial_match_vector(combined_dataframe['Match'],combined_dataframe['Compare'])
-#print(combined_dataframe)
-#combined_dataframe['Cenzored']=partial_cenzo_vector(combined_dataframe['Original'], combined_dataframe['Score'])
+root.geometry('800x600')
+root.mainloop()
+
+
+#GUI END
+
+
+#in1 = "test dupa chuj gowno gówno pizda ogień jebać politechnikę gównianą pierdolic pięrdołić"
+#in1 = wpisIn
+#out1 = []
+#for i in inputtolist(in1):
+#    out1.append(cenzo(i))
+#print(out1)
+
 
