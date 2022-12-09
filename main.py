@@ -71,23 +71,35 @@ def removedup(string):                                                          
 
 def inputtolist(string):
     #   find all words separated by characters [a-zA-Z0-9_]+
-    return re.findall(r'\w+', string)                                                   #  mozna tez zamienic na lambde
+    string = re.split(r'(\S+)', string)                                                   #  mozna tez zamienic na lambde
+    string1 = []
+    string[0 : 1] = [''.join(string[0 : 2])]
+    string.pop(1)
+    for i in range(0, len(string), 2):
+        string1.append(string[i] + string[i+1])                                             #    chcialem uniknac loopow ale tutaj troche zglupialem (moze to sie da zrobic madrym regexem ale nie mam czasu bardziej eksperymentowac)
+    return string1
+
+
+def inputtomatch(string):
+    #   find all words separated by characters [a-zA-Z0-9_]+
+    string = re.sub(r'[^a-zA-Z\d\s:]', '', string)
+    return re.findall(r'\S+', string)
 
 def lower(string):
     return string.lower()
 
 
 
-def cenzo(string, int):                                                                      #  cenzurowanie slowek
+def cenzo(string, int):
     #   replaces inner letters in a word with stars if its similarity with blacklist word is greater than treshold
-    if int >= threshold:
-        return string[0] + '*' * (len(string)-2) + string[-1]
+    if int >= threshold and len(string) > 1:
+        return re.sub(r'\w', '*', string)
     else:
         return string
 
 def partial_match(x,y):
    #    returns the ratio of similarity between 2 words
-    return(fuzz.ratio(x,y))
+    return(fuzz.partial_ratio(x,y))
 
 partial_match_vector = np.vectorize(partial_match)                                      #   https://stackoverflow.com/questions/56040817/python-fuzzy-matching-strings-in-list-performance
 partial_cenzo_vector = np.vectorize(cenzo)
@@ -95,17 +107,18 @@ partial_cenzo_vector = np.vectorize(cenzo)
 
 
 
-input = "Chuj kaczka. chuj, chuj chój   chuja    chuuuuuuuja chujek chuju chujem huj huja hujek huju hujem"
+input = "  uu4urwa. chuuuj kurwa,.u"
+
 output = []
-#inputlistvar = inputtolist(input)
 threshold = 75                                                                          #   w jakim procencie musza sie pokrywac by byc ocenzurowane (0-100)
+#print(cenzo(input,100))
 
 
-
-
+print(inputtolist(input))
+print(inputtomatch(input))
 dataframecolumn_original = pd.DataFrame(inputtolist(input))
 dataframecolumn_original.columns = ['Original']
-dataframecolumn_match = pd.DataFrame(inputtolist(removedup(translatetable(lower(input)))), index = dataframecolumn_original['Original'])
+dataframecolumn_match = pd.DataFrame(inputtomatch(removedup(translatetable(lower(input)))), index = dataframecolumn_original['Original'])
 dataframecolumn_match.columns = ['Match']
 
 dataframecolumn_compare = pd.DataFrame(blacklist)
