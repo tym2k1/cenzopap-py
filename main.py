@@ -1,11 +1,17 @@
 import os
 import re
-import tkinter
+from fuzzywuzzy import fuzz
+import pandas as pd
+import numpy as np
+from tkinter import *
+import customtkinter
 
+with open(os.path.join(os.path.dirname(__file__), 'word_blacklist1.txt')) as file:
+   blacklist = set(file.read().split('\n'))                                                 #   wrzucone do seta bo najlepsze data type fo tego chyba + relative path!!!
+   #blacklistset = set(line.strip() for line in file)                                          #   For large blacklist this option would provide faster bootup
+   blacklist.discard('')
+   blacklist.discard(' ')
 
-with open(os.path.join(os.path.dirname(__file__), 'word_blacklist.txt')) as file:       #word_blacklist.txt  key_words.txt
-   blacklist = set(file.read().split())                                                 #   wrzucone do seta bo najlepsze data type fo tego chyba + relative path!!!
-   #blacklist = set(line.strip() for line in file)                                      #   For large sets of words this option would be faster
 
 replacement_dict = {
     'ą': 'a',
@@ -54,92 +60,126 @@ replacement_dict = {
     '[-': 'e',      # dokoncze potem
 }
 
+
+
 def translatetable(string):
+   #replaces characters imitating letters to letters
     regex = re.compile('|'.join(map(re.escape, replacement_dict)))                      #   https://stackoverflow.com/questions/63230213/translate-table-value-error-valueerror-string-keys-in-translate-table-must-be-o
     return regex.sub(lambda match: replacement_dict[match.group(0)], string)            #   :)
 
-#def translatetable(string):
-    #string = string.translate(str.maketrans(replacement_dict))                         #   Works only for dict keys with a size of 1
-    #return string
-
-def removedup(string):
-    string = re.sub(r"(.)\1+", r"\1", string)                                           #   usuwanie tych samych literek kolo sb (chuuuuj = chuj)
-    return string                                                                       #   mozna zamienic na lambde
+def removedup(string):                                                                  #   usuwanie tych samych literek kolo sb (chuuuuj = chuj)
+    #removes duplicate letters
+    return re.sub(r"(.)\1+", r"\1", string)                                             #   mozna zamienic na lambde
 
 def inputtolist(string):
-    wordlist = re.findall(r'\w+', string)
-    return wordlist                                                                      #  mozna tez zamienic na lambde
+    #find all words separated by characters [a-zA-Z0-9_]+
+    return re.findall(r'\w+', string)                                                   #  mozna tez zamienic na lambde
 
-def cenzo(string):                                                                       #  main func poki co
-    #string = match.group()
-    if removedup(translatetable(string.lower())) in blacklist:
-        #return '*' * len(string)                                                         #  2 wersje zwracanie full cenzo (chuj = ****) albo niepelne (chuj = c**j)
-        return string[0] + '*' * (len(string)-2) + string[-1] 
+def lower(string):
+    return string.lower()
+
+
+
+def cenzo(string, int):                                                                      #  cenzurowanie slowek
+    #"""replaces inner letters in a word with stars if its similarity with blacklist word is greater than treshold"""
+    if int >= threshold:
+        return string[0] + '*' * (len(string)-2) + string[-1]
     else:
         return string
 
-print(translatetable('\/4p3'))
-print(translatetable('CH000000000i'))
-print(inputtolist("dupa maryna cyce wadowice"))
+def partial_match(x,y):
+   #"""returns the ratio of similarity between 2 words"""
+    return(fuzz.partial_ratio(x,y))
 
+partial_match_vector = np.vectorize(partial_match)                                      #   https://stackoverflow.com/questions/56040817/python-fuzzy-matching-strings-in-list-performance
+partial_cenzo_vector = np.vectorize(cenzo)
+
+global inDoc
+inDoc = 1
+global wyjscie  #ocenzurowane zdanie
+
+def funCenz():
+    inDoc=inBox.get()
+    print(inDoc)
+    outBox.delete(0, END)
+    outBox.insert(1, wyjscie)
+
+#Input do GUI
+#outBox.input(0,"Wazaaaaaa")
+input = inDoc
+input = "Hrabia cHujnica z żónął hunją"
+
+output = []
+print(inDoc)
+#inputlistvar = inputtolist(input)
+threshold = 75                                                                          #   w jakim procencie musza sie pokrywac by byc ocenzurowane (0-100)
+
+
+
+
+dataframecolumn_original = pd.DataFrame(inputtolist(input))
+dataframecolumn_original.columns = ['Original']
+dataframecolumn_match = pd.DataFrame(inputtolist(removedup(translatetable(lower(input)))), index = dataframecolumn_original['Original'])
+dataframecolumn_match.columns = ['Match']
+
+dataframecolumn_compare = pd.DataFrame(blacklist)
+dataframecolumn_compare.columns = ['Compare']                                           #   that was hard ngl
+dataframecolumn_compare_trans = dataframecolumn_compare.transpose()
+
+print(dataframecolumn_match)
+print(dataframecolumn_compare_trans)
+
+score_dataframe = pd.DataFrame(partial_match_vector(dataframecolumn_match, dataframecolumn_compare_trans), columns = dataframecolumn_compare['Compare'] ,index = dataframecolumn_original['Original'])
+
+score_dataframe['Match'] = dataframecolumn_match
+score_dataframe['Max_Score'] = score_dataframe.max(axis=1)
+score_dataframe['Cenzored']=partial_cenzo_vector(score_dataframe.index, score_dataframe['Max_Score'])
+
+print(score_dataframe)
+
+print(score_dataframe['Cenzored'])
+
+wyjscie = "555"
+#outBox.insert(0, "Wazaaaaaa")
 
 
 #GUI
+root = customtkinter.CTk()
+root.geometry("800x600")
+root.configure(fg_color="#212121")
+customtkinter.set_appearance_mode("dark")
+bCenz = customtkinter.CTkButton(master=root, text="Cenzuruj",
+                                bg_color="#323232", fg_color="#14FFEC", text_color="#212121", hover_color="#0D7377", border_width=2, border_color="#323232", font=('Seaford', 20),
+                                height=50,
+                                width=200,
+                                command=funCenz)
+bCenz.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-root = tkinter.Tk()
-root.title = "Wielka Polska Cenzura"
-root.configure(bg ="#242424")
-l = tkinter.Label(root, text='Cenzura', font=("BROADWAY", 40), bg="#242424", fg="#1CF020")
-l.place(x=250, y=20, width=300, height=80)
+inBox = customtkinter.CTkEntry(master=root,
+                               placeholder_text="Input",
+                               width=400,
+                               height=40,
+                               border_width=2,
+                               corner_radius=10,
+                               text_color="#14FFEC",
+                               font=('Seaford', 20))
+inBox.place(relx=0.5, rely=0.25, anchor=CENTER)
+
+#txbox = Text(root, bg="#4D4D4D")          #IN
+#txbox.place(x=150, y=150, width=200, height=300)
+
+#inBox.configure()
+
+outBox = customtkinter.CTkEntry(master=root,
+                               placeholder_text="Output",
+                               width=400,
+                               height=40,
+                               border_width=2,
+                               corner_radius=10,
+                               text_color="#14FFEC",
+                                font=('Seaford', 20)) #state="disabled"
+outBox.place(relx=0.5, rely=0.75, anchor=CENTER)
 
 
-def funPrzycisk():
-    #wpis.delete(0, END)
-
-
-#ENTRY BOX
-    #print(txbox.get("1.0", tkinter.END))
-    global wpisIn
-   # wpisIn = wpis.get()
-    in1 = txbox.get("1.0", tkinter.END)
-    out1 = []
-    for i in inputtolist(in1):
-        out1.append(cenzo(i))
-    toutBox.delete("1.0", tkinter.END)
-    toutBox.insert(tkinter.INSERT, out1)
-
-
-
-b = tkinter.Button(root, text='Ocenzuruj', width=10, bg='#4D4D4D', fg='white', font=20, command = funPrzycisk)
-b.place(x=350, y=500, width=100, height=40)
-
-#wpis = tkinter.Entry(root, width=50)                        #tu wpisujemy rzeczy
-#wpis.place(x=450, y=200, width=200, height=300)
-
-#otput = tkinter.Entry(root, width=50)                       #wynik jest wypisywany
-#otput.pack()
-
-#Textbox
-txbox = tkinter.Text(root, bg="#4D4D4D")          #IN
-txbox.place(x=150, y=150, width=200, height=300)
-
-toutBox = tkinter.Text(root, bg="#4D4D4D")
-toutBox.place(x=450, y=150, width=200, height=300)
-
-# wpis.insert(0, "Wpisz tekst do ocenzurowania")            #co sie na poczatku wyswietla w Input Panelu
-
-root.geometry('800x600')
 root.mainloop()
-
-
-#GUI END
-
-
-#in1 = "test dupa chuj gowno gówno pizda ogień jebać politechnikę gównianą pierdolic pięrdołić"
-#in1 = wpisIn
-#out1 = []
-#for i in inputtolist(in1):
-#    out1.append(cenzo(i))
-#print(out1)
-
-
+#GUI-END
