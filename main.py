@@ -3,74 +3,24 @@ import re
 from fuzzywuzzy import fuzz
 import pandas as pd
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from replacement_dictionary import replacement_dict
+
+
 
 with open(os.path.join(os.path.dirname(__file__), 'word_blacklist.txt')) as file:
-   blacklist = set(file.read().split('\n'))                                                 #   wrzucone do seta bo najlepsze data type fo tego chyba + relative path!!!
-   #blacklistset = set(line.strip() for line in file)                                          #   For large blacklist this option would provide faster bootup
-   blacklist.discard('')
-   blacklist.discard(' ')
+    #   import words to be censored
+    blacklist = set(file.read().split('\n'))
+    #blacklistset = set(line.strip() for line in file)                                          #   For large blacklist this option would provide faster bootup
+    blacklist.discard('')
+    blacklist.discard(' ')
 
 
-replacement_dict = {
-    'ą': 'a',
-    'ć': 'c',
-    'ę': 'e',
-    'ł': 'l',
-    'ń': 'n',
-    'ó': 'o',
-    'ś': 's',
-    'ź': 'z',
-    'ż': 'z',
-    #'0': 'o',
-    #'1': 'i',
-    #'2': 'z',
-    #'3': 'e',
-    #'4': 'a',
-    #'5': 's',
-    #'\/': 'v',
-    '@': 'a',
-    '^': 'a',
-    '/\\': 'a',
-    '/-\\': 'a',    #   jak przesadzilem dajcie znac xd
-    '8': 'b',       #   imo do wrzucenia w inny plik bo sie rozroslo do giga rozmiarow a tez tak fajnie ze wiecie mozna edytowac user friendly
-    '6': 'b',       #   nie wszystkie chyba maja do konca sens ale fajnie zeby bylo ze mamy w slowniku opcje kilkuliterowe cause were cool
-    '13': 'b',      #   cenzurowanie ASCII art lets go
-    '|3': 'b',
-    '/3': 'b',
-    'ß': 'b',
-    'P>': 'b',
-    '|:': 'b',
-    '©': 'c',
-    '¢': 'c',
-    '<': 'c',
-    '[': 'c',
-    '(': 'c',
-    '{': 'c',
-    ')': 'd',
-    '|)': 'd',
-    '[)': 'd',
-    '|>': 'd',
-    '|o': 'd',
-    '3': 'e',
-    '&': 'e',
-    '€': 'e',
-    'ë': 'e',
-    '[-': 'e',      # dokoncze potem
-}
-
-
-
-def translatetable(string):
-   #    replaces characters imitating letters to letters
-    regex = re.compile('|'.join(map(re.escape, replacement_dict)))                      #   https://stackoverflow.com/questions/63230213/translate-table-value-error-valueerror-string-keys-in-translate-table-must-be-o
-    return regex.sub(lambda match: replacement_dict[match.group(0)], string)            #   :)
-
-def removedup(string):                                                                  #   usuwanie tych samych literek kolo sb (chuuuuj = chuj)
-    #   removes duplicate letters
-    return re.sub(r"(.)\1+", r"\1", string)                                             #   mozna zamienic na lambde
 
 def inputtolist(string):
-    #   find all words separated by characters [a-zA-Z0-9_]+
+    #   seperate the words but include the whitespaces for later remerging of the text
     string = re.split(r'(\S+)', string)                                                   #  mozna tez zamienic na lambde
     string1 = []
     string[0 : 1] = [''.join(string[0 : 2])]
@@ -79,45 +29,58 @@ def inputtolist(string):
         string1.append(string[i] + string[i+1])                                             #    chcialem uniknac loopow ale tutaj troche zglupialem (moze to sie da zrobic madrym regexem ale nie mam czasu bardziej eksperymentowac)
     return string1
 
-
 def inputtomatch(string):
-    #   find all words separated by characters [a-zA-Z0-9_]+
+    #   find all words without whitespaces+
     string = re.sub(r'[^a-zA-Z\d\s:]', '', string)
     return re.findall(r'\S+', string)
 
+
+
+def translatetable(string):
+    #    replaces characters imitating letters to letters
+    regex = re.compile('|'.join(map(re.escape, replacement_dict)))                      #   https://stackoverflow.com/questions/63230213/translate-table-value-error-valueerror-string-keys-in-translate-table-must-be-o
+    return regex.sub(lambda match: replacement_dict[match.group(0)], string)            #   :)
+
+def removedup(string):                                                                  #   usuwanie tych samych literek kolo sb (chuuuuj = chuj)
+    #   removes duplicate letters
+    return re.sub(r"(.)\1+", r"\1", string)                                             #   mozna zamienic na lambde
+
 def lower(string):
+    #   made just for convenience
     return string.lower()
-
-
 
 def cenzo(string, match, int):
     #   replaces inner letters in a word with stars if its similarity with blacklist word is greater than treshold
-    if int >= threshold and match > 2:
+    if int >= threshold: #and match > 2:
         return re.sub(r'\w', '*', string)
     else:
         return string
 
+
+
 def partial_match(x,y):
    #    returns the ratio of similarity between 2 words
-    if fuzz.ratio(x,y) >= threshold:
-        debugls.append([x,y])
-    return(fuzz.partial_ratio(x,y))
+    #fuzziness = fuzz.token_set_ratio(x,y)
+    fuzziness = fuzz.QRatio(x,y)
+    #if fuzziness >= threshold:
+    #    debugls.append([x,y])
+    return fuzziness
 
-#def partial_test(x,y):
-#    print(fuzz.ratio(x,y))
-#    print(fuzz.partial_ratio(x,y))
-#    print(fuzz.token_set_ratio(x,y))
-#    print(fuzz.token_sort_ratio(x,y))
-#    print(fuzz._token_set(x,y))
-#    print(fuzz._token_sort(x,y))
-#    print(fuzz.partial_token_set_ratio(x,y))
-#    print(fuzz.partial_token_sort_ratio(x,y))
+def partial_test(x,y):
+    #   usefull for debuging
+    print(fuzz.ratio(x,y))
+    print(fuzz.partial_ratio(x,y))
+    print(fuzz.token_set_ratio(x,y))
+    print(fuzz.token_sort_ratio(x,y))
+    print(fuzz._token_set(x,y))
+    print(fuzz._token_sort(x,y))
+    print(fuzz.partial_token_set_ratio(x,y))
+    print(fuzz.partial_token_sort_ratio(x,y))
+    print(fuzz.QRatio(x,y))
+    print(fuzz.WRatio(x,y))
+    print(fuzz.platform(x,y))
 
-#partial_test_vector = np.vectorize(partial_test)
-
-
-
-
+partial_test_vector = np.vectorize(partial_test)
 
 partial_match_vector = np.vectorize(partial_match)                                      #   https://stackoverflow.com/questions/56040817/python-fuzzy-matching-strings-in-list-performance
 partial_cenzo_vector = np.vectorize(cenzo)
@@ -125,22 +88,17 @@ partial_cenzo_vector = np.vectorize(cenzo)
 
 
 
-input = "kurwa kurwienie kurwiki chuje chujnia chujoza "
-
+input = "Nie mam już siły do tej kurwy. Drukarka HP nie drukuje Nie mam już siły do tej kurwy. Drukarka HP nie drukuje Nie mam już siły do tej kurwy. Drukarka HP nie drukujeNie mam już siły do tej kurwy. Drukarka HP nie drukuje"
 output = []
-threshold = 80                                                                           #   w jakim procencie musza sie pokrywac by byc ocenzurowane (0-100)
-#print(cenzo(input,100))
-debugls = []
+threshold = 70                                                                           #   w jakim procencie musza sie pokrywac by byc ocenzurowane (0-100)
 
-#print(inputtolist(input))
-#print(inputtomatch(input))
 dataframecolumn_original = pd.DataFrame(inputtolist(input))
 dataframecolumn_original.columns = ['Original']
 dataframecolumn_match = pd.DataFrame(inputtomatch(removedup(translatetable(lower(input)))), index = dataframecolumn_original['Original'])
 dataframecolumn_match.columns = ['Match']
 
 dataframecolumn_compare = pd.DataFrame(blacklist)
-dataframecolumn_compare.columns = ['Compare']                                           #   that was hard ngl
+dataframecolumn_compare.columns = ['Compare']
 dataframecolumn_compare_trans = dataframecolumn_compare.transpose()
 
 #print(dataframecolumn_match)
@@ -148,15 +106,26 @@ dataframecolumn_compare_trans = dataframecolumn_compare.transpose()
 
 score_dataframe = pd.DataFrame(partial_match_vector(dataframecolumn_match, dataframecolumn_compare_trans), columns = dataframecolumn_compare['Compare'] ,index = dataframecolumn_original['Original'])
 
-score_dataframe['Match'] = dataframecolumn_match
-score_dataframe['Match_Lenght'] = dataframecolumn_match['Match'].str.len()
-score_dataframe['Max_Score'] = score_dataframe.max(axis=1)
-score_dataframe['Cenzored']=partial_cenzo_vector(score_dataframe.index, score_dataframe['Match_Lenght'], score_dataframe['Max_Score'])
+print(score_dataframe)
 
-bad_dataframe = dataframecolumn_match
+#na to checkbox
 
-#print(score_dataframe)
-print(score_dataframe.loc[(score_dataframe['Max_Score'] >= threshold)]) #& score_dataframe['Match_Lenght'] > 2])
-output = ''.join(score_dataframe["Cenzored"])
+combined_dataframe = pd.DataFrame.copy(score_dataframe)
+combined_dataframe['Match'] = dataframecolumn_match
+
+
+
+combined_dataframe['Match_Lenght'] = dataframecolumn_match['Match'].str.len()
+combined_dataframe['Max_Score'] = combined_dataframe.max(axis=1)
+combined_dataframe['Cenzored']=partial_cenzo_vector(combined_dataframe.index, combined_dataframe['Match_Lenght'], combined_dataframe['Max_Score'])
+
+#print(combined_dataframe)
+#print(combined_dataframe.loc[(combined_dataframe['Max_Score'] >= threshold)])
+
+output = ''.join(combined_dataframe["Cenzored"])
 print(output)
-print(debugls)
+print(combined_dataframe)
+
+plt.close()
+sns.heatmap(score_dataframe, annot=True, xticklabels=True, yticklabels=True, cmap="Blues")
+plt.show()
