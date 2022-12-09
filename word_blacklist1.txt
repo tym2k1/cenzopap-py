@@ -2,8 +2,6 @@ chuj
 cipa
 cipie
 dojeb
-dopieprza
-dopieprz
 dopierdalac
 dopierdala
 dopierdalal
@@ -177,7 +175,6 @@ pierdolnik
 pierdolona
 pierdolone
 pierdolony
-pierdziec
 pizda
 pizde
 pizdzie
