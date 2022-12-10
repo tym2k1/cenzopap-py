@@ -11,12 +11,6 @@ import customtkinter
 
 from replacement_dictionary import replacement_dict
 
-root = customtkinter.CTk()
-root.geometry("800x600")
-root.withdraw()
-root.configure(fg_color="#212121")
-customtkinter.set_appearance_mode("dark")
-
 
 with open(os.path.join(os.path.dirname(__file__), 'word_blacklist.txt')) as file:
     #   import words to be censored
@@ -100,7 +94,6 @@ threshold = 70  # w jakim procencie musza sie pokrywac by byc ocenzurowane (0-10
 
 def funCenz():
     inDoc=inBox.get("1.0", END)
-    outBox.delete("1.0", END)
 
     input = inDoc
     output = []
@@ -134,13 +127,16 @@ def funCenz():
     print(combined_dataframe.loc[(combined_dataframe['Max_Score'] >= threshold) & (combined_dataframe['Match_Lenght'] > 2)])
 
     output = ''.join(combined_dataframe["Cenzored"])
+    outBox.configure(state = NORMAL)
+    outBox.delete("1.0", END)
     outBox.insert(INSERT, output)
+    outBox.configure(state = DISABLED)
     if plotflag.get() == True: funPlot()
 
 
 def funPlot():
     plt.close()
-    sns.heatmap(score_dataframe, annot=True, xticklabels=True, yticklabels=True, cmap="Blues")
+    sns.heatmap(score_dataframe, annot=True, xticklabels=True, yticklabels=True, cmap="Blues", vmin = 0, vmax = 100)
     plt.show()
 
 
@@ -149,31 +145,56 @@ def funPlot():
 root = customtkinter.CTk()
 root.geometry("800x600")
 root.configure(fg_color="#212121")
+root.title("cenzopap-py GUI")
 customtkinter.set_appearance_mode("dark")
 
 frame = customtkinter.CTkFrame(master=root,
-                               width=750,
-                               height=525,
+                               #width=1,
+                               #height=1,
                                corner_radius=10)
-frame.place(x=25, y=25)
+#frame.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+frame.grid(row = 0, column = 0, pady = 10, padx = 10)
+#frame.pack(fill = 'both', expand = True)
 
-
-bCenz = customtkinter.CTkButton(master=root, text="c e n z o",
+bCenz = customtkinter.CTkButton(master=frame, text="c e n z o",
                                 bg_color="#323232", fg_color="#14FFEC", text_color="#212121", hover_color="#0D7377", border_width=2, border_color="#323232", font=('Seaford', 20),
                                 height=50,
-                                width=200,
+                                width=150,
                                 command=funCenz)
-bCenz.place(relx=0.5, rely=0.5, anchor=CENTER)
+#bCenz.place(relx=0.5, rely=0.5, anchor=CENTER)
+bCenz.grid(row = 4, column = 2)
 
 plotflag = BooleanVar()
-CPlot = customtkinter.CTkCheckBox(master = root, text = "Calculate Heatmap (might take a while)", variable = plotflag).grid(row=0, sticky=S)
+CPlot = customtkinter.CTkCheckBox(master = frame, text = "Calculate Heatmap", variable = plotflag)
+CPlot.grid(row = 5, column = 2, sticky = S)
 
-inBox = Text(root, bg="#323232", fg="#14FFEC", font=('Seaford', 14))          #IN
-inBox.place(x=50, y=150, width=200, height=300)
+inBox = customtkinter.CTkTextbox(frame, fg_color="#323232", font=('Seaford', 14), width= 1200, height= 1000)          #IN
+#inBox.place(x=50, y=150, width=200, height=300)
+inBox.grid(row = 1, column = 0, rowspan = 6, columnspan = 2, sticky = W, pady = 25, padx = 25)
 
+outBox = customtkinter.CTkTextbox(frame, fg_color="#323232", font=('Seaford', 14), width= 1200, height= 1000, state = DISABLED)          #OUT
+#outBox.place(x=550, y=150, width=200, height=300)
+outBox.grid(row = 1, column = 3, rowspan = 6, columnspan = 2, sticky = E, pady = 25, padx = 25)
 
-outBox = Text(root, bg="#323232", fg="#14FFEC", font=('Seaford', 14))          #OUT
-outBox.place(x=550, y=150, width=200, height=300)
+#frame.rowconfigure(5, weight = 1)
+#frame.columnconfigure(5, weight = 1)
+
+root.grid_rowconfigure(0, weight = 1)
+#root.grid_rowconfigure(1, weight = 1)
+#root.grid_rowconfigure(2, weight = 0)
+
+root.grid_columnconfigure(0, weight = 1)
+#root.grid_columnconfigure(1, weight = 1)
+#root.grid_columnconfigure(2, weight = 0)
+
+for i in range(0,7):
+    frame.grid_rowconfigure(i, weight = 1)          #test (powinno dac sie to zrobic inaczej ale na necie nie ma ladniejszej funkcji ew do wrzucenia w loopa)
+
+frame.grid_columnconfigure(0, weight = 1)
+frame.grid_columnconfigure(1, weight = 1)
+frame.grid_columnconfigure(2, weight = 0)
+frame.grid_columnconfigure(3, weight = 1)
+frame.grid_columnconfigure(4, weight = 1)
 
 
 root.mainloop()
