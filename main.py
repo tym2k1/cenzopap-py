@@ -23,21 +23,23 @@ with open(os.path.join(os.path.dirname(__file__), 'word_blacklist.txt')) as file
 
 def inputtolist(string):
     #   seperate the words but include the whitespaces for later remerging of the text
-    string = re.split(r'(\S+)', string)                                                   #  mozna tez zamienic na lambde
+    string = re.split(r'(\S+\w)', string)                                                   #  mozna tez zamienic na lambde
+    #print(string)
     string1 = []
-    string[0 : 1] = [''.join(string[0 : 2])]
-    try:
-        string.pop(1)
-    except:
-        return string
-    for i in range(0, len(string), 2):
+    #string[0 : 1] = [''.join(string[0 : 2])]
+    #try:
+    #    string.pop(1)
+    #except:
+    #    return string
+    #print(len(string))
+    for i in range(1, len(string), 2):
         string1.append(string[i] + string[i+1])                                             #    chcialem uniknac loopow ale tutaj troche zglupialem (moze to sie da zrobic madrym regexem ale nie mam czasu bardziej eksperymentowac)
     return string1
 
 def inputtomatch(string):
     #   find all words without whitespaces+
     string = re.sub(r'[^a-zA-Z\d\s:]', '', string)
-    return re.findall(r'\S+', string)
+    return re.findall(r'\S+\w', string)
 
 
 
@@ -65,22 +67,22 @@ def cenzo(string, match, int):
 
 def partial_match(x,y):
    #    returns the ratio of similarity between 2 words
-    fuzziness = fuzz.QRatio(x,y)
+    fuzziness = fuzz.WRatio(x,y)
     return fuzziness
 
 def partial_test(x,y):
     #   usefull for debuging
-    print(fuzz.ratio(x,y))
-    print(fuzz.partial_ratio(x,y))
-    print(fuzz.token_set_ratio(x,y))
-    print(fuzz.token_sort_ratio(x,y))
-    print(fuzz._token_set(x,y))
-    print(fuzz._token_sort(x,y))
-    print(fuzz.partial_token_set_ratio(x,y))
-    print(fuzz.partial_token_sort_ratio(x,y))
-    print(fuzz.QRatio(x,y))
-    print(fuzz.WRatio(x,y))
-    print(fuzz.platform(x,y))
+    print("ratio" + str(fuzz.ratio(x,y)))
+    print("partial_ratio" + str(fuzz.partial_ratio(x,y)))
+    print("token_set_ratio" + str(fuzz.token_set_ratio(x,y)))
+    print("token_sort_ratio" + str(fuzz.token_sort_ratio(x,y)))
+    print("_token_set" + str(fuzz._token_set(x,y)))
+    print("_token_sort" + str(fuzz._token_sort(x,y)))
+    print("partial_token_set_ratio" + str(fuzz.partial_token_set_ratio(x,y)))
+    print("partial_token_sort_ratio" + str(fuzz.partial_token_sort_ratio(x,y)))
+    print("QRatio" + str(fuzz.QRatio(x,y)))
+    print("WRatio" + str(fuzz.WRatio(x,y)))
+    print("platform" + str(fuzz.platform(x,y)))
 
 partial_test_vector = np.vectorize(partial_test)
 
@@ -90,13 +92,18 @@ partial_cenzo_vector = np.vectorize(cenzo)
 inDoc = ""
 wyjscie = ""
 
-threshold = 70  # w jakim procencie musza sie pokrywac by byc ocenzurowane (0-100)
+threshold = 75  # w jakim procencie musza sie pokrywac by byc ocenzurowane (0-100)
 
 def funCenz():
     inDoc=inBox.get("1.0", END)
 
     input = inDoc
     output = []
+
+    #print(inputtolist(input))
+    #print(inputtomatch(removedup(translatetable(lower(input)))))
+    #print(removedup(translatetable(lower(input))))
+    #print(translatetable(lower(input)))
 
     dataframecolumn_original = pd.DataFrame(inputtolist(input))
     dataframecolumn_original.columns = ['Original']
@@ -122,6 +129,7 @@ def funCenz():
 
     combined_dataframe['Match_Lenght'] = dataframecolumn_match['Match'].str.len()
     combined_dataframe['Max_Score'] = combined_dataframe.max(axis=1)
+    #combined_dataframe['Matched_word'] = combined_dataframe.idxmax(axis="columns")
     combined_dataframe['Cenzored'] = partial_cenzo_vector(combined_dataframe.index, combined_dataframe['Match_Lenght'], combined_dataframe['Max_Score'])
 
     print(combined_dataframe.loc[(combined_dataframe['Max_Score'] >= threshold) & (combined_dataframe['Match_Lenght'] > 2)])
@@ -136,7 +144,7 @@ def funCenz():
 
 def funPlot():
     plt.close()
-    sns.heatmap(score_dataframe, annot=True, xticklabels=True, yticklabels=True, cmap="Blues", vmin = 0, vmax = 100)
+    sns.heatmap(score_dataframe, annot=True, xticklabels=True, yticklabels=True, cmap="Blues", vmin = 0, vmax = 100, fmt = 'd')
     plt.show()
 
 
@@ -148,47 +156,43 @@ root.configure(fg_color="#212121")
 root.title("cenzopap-py GUI")
 customtkinter.set_appearance_mode("dark")
 
-frame = customtkinter.CTkFrame(master=root,
-                               #width=1,
-                               #height=1,
-                               corner_radius=10)
-#frame.place(relx = 0.5, rely = 0.5, anchor = CENTER)
-frame.grid(row = 0, column = 0, pady = 10, padx = 10)
-#frame.pack(fill = 'both', expand = True)
+frame = customtkinter.CTkFrame( master=root,
+                                corner_radius=10)
+frame.grid( row = 0,
+            column = 0,
+            pady = 10,
+            padx = 10)
 
-bCenz = customtkinter.CTkButton(master=frame, text="c e n z o",
-                                bg_color="#323232", fg_color="#14FFEC", text_color="#212121", hover_color="#0D7377", border_width=2, border_color="#323232", font=('Seaford', 20),
-                                height=50,
-                                width=150,
-                                command=funCenz)
-#bCenz.place(relx=0.5, rely=0.5, anchor=CENTER)
+bCenz = customtkinter.CTkButton(master = frame,
+                                text = "c e n z o",
+                                bg_color = "#323232",
+                                fg_color = "#14FFEC",
+                                text_color = "#212121",
+                                hover_color = "#0D7377",
+                                border_width = 2,
+                                border_color = "#323232",
+                                font = ('Seaford', 20),
+                                height = 50,
+                                width = 150,
+                                command = funCenz)
 bCenz.grid(row = 4, column = 2)
 
 plotflag = BooleanVar()
 CPlot = customtkinter.CTkCheckBox(master = frame, text = "Calculate Heatmap", variable = plotflag)
 CPlot.grid(row = 5, column = 2, sticky = S)
 
-inBox = customtkinter.CTkTextbox(frame, fg_color="#323232", font=('Seaford', 14), width= 1200, height= 1000)          #IN
-#inBox.place(x=50, y=150, width=200, height=300)
+inBox = customtkinter.CTkTextbox(frame, fg_color="#323232", font=('Seaford', 14), width= 1500, height= 1000)          #IN
 inBox.grid(row = 1, column = 0, rowspan = 6, columnspan = 2, sticky = W, pady = 25, padx = 25)
 
-outBox = customtkinter.CTkTextbox(frame, fg_color="#323232", font=('Seaford', 14), width= 1200, height= 1000, state = DISABLED)          #OUT
-#outBox.place(x=550, y=150, width=200, height=300)
+outBox = customtkinter.CTkTextbox(frame, fg_color="#323232", font=('Seaford', 14), width= 1500, height= 1000, state = DISABLED)          #OUT
 outBox.grid(row = 1, column = 3, rowspan = 6, columnspan = 2, sticky = E, pady = 25, padx = 25)
 
-#frame.rowconfigure(5, weight = 1)
-#frame.columnconfigure(5, weight = 1)
-
 root.grid_rowconfigure(0, weight = 1)
-#root.grid_rowconfigure(1, weight = 1)
-#root.grid_rowconfigure(2, weight = 0)
 
 root.grid_columnconfigure(0, weight = 1)
-#root.grid_columnconfigure(1, weight = 1)
-#root.grid_columnconfigure(2, weight = 0)
 
 for i in range(0,7):
-    frame.grid_rowconfigure(i, weight = 1)          #test (powinno dac sie to zrobic inaczej ale na necie nie ma ladniejszej funkcji ew do wrzucenia w loopa)
+    frame.grid_rowconfigure(i, weight = 1)
 
 frame.grid_columnconfigure(0, weight = 1)
 frame.grid_columnconfigure(1, weight = 1)
@@ -199,4 +203,3 @@ frame.grid_columnconfigure(4, weight = 1)
 
 root.mainloop()
 #GUI-END
-
